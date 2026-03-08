@@ -1,0 +1,10 @@
+{"type":"uses_model","srcKey":"agent-def-leaf-enricher","dstKey":"model-gpt-4o-mini"}
+{"type":"uses_model","srcKey":"agent-def-leaf-researcher","dstKey":"model-gpt-4o-mini"}
+{"type":"uses_model","srcKey":"agent-def-leaf-coder","dstKey":"model-gpt-4o"}
+{"type":"uses_model","srcKey":"agent-def-leaf-reviewer","dstKey":"model-gpt-4o-mini"}
+{"type":"uses_model","srcKey":"agent-def-leaf-designer","dstKey":"model-gpt-4o"}
+{"type":"uses_model","srcKey":"agent-def-pool-manager-research","dstKey":"model-gpt-4o"}
+{"type":"uses_model","srcKey":"agent-def-pool-manager-coding","dstKey":"model-gpt-4o"}
+{"type":"uses_model","srcKey":"agent-def-pool-manager-review","dstKey":"model-gpt-4o-mini"}
+{"type":"uses_model","srcKey":"agent-def-orchestrator","dstKey":"model-gpt-4o"}
+{"type":"uses_model","srcKey":"agent-def-janitor","dstKey":"model-gpt-4o"}

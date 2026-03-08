@@ -1,0 +1,3 @@
+{"type":"managed_by","srcKey":"pool-research","dstKey":"agent-def-pool-manager-research"}
+{"type":"managed_by","srcKey":"pool-coding","dstKey":"agent-def-pool-manager-coding"}
+{"type":"managed_by","srcKey":"pool-review","dstKey":"agent-def-pool-manager-review"}
