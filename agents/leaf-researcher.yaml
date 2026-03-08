@@ -6,7 +6,7 @@ description: >
   and key findings as graph objects.
 
 model:
-  name: gpt-4o-mini
+  name: gemini-2.5-flash
   temperature: 0.5
   maxTokens: 8192
 

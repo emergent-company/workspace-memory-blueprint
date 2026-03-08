@@ -6,7 +6,7 @@ description: >
   specific criteria that were not met.
 
 model:
-  name: gpt-4o-mini
+  name: gemini-2.5-flash
   temperature: 0.2
   maxTokens: 4096
 

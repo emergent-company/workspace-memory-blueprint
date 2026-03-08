@@ -6,7 +6,7 @@ description: >
   tier to balance quality and cost.
 
 model:
-  name: gpt-4o
+  name: gemini-2.5-flash
   temperature: 0.2
   maxTokens: 16384
 

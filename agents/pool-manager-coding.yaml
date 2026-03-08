@@ -6,7 +6,7 @@ description: >
   repeatedly fail acceptance criteria.
 
 model:
-  name: gpt-4o
+  name: gemini-2.5-flash
   temperature: 0.3
   maxTokens: 8192
 

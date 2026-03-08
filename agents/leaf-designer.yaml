@@ -6,7 +6,7 @@ description: >
   as TaskResult objects for downstream agents to reference.
 
 model:
-  name: gpt-4o
+  name: gemini-2.5-flash
   temperature: 0.4
   maxTokens: 16384
 
