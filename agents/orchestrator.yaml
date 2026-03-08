@@ -69,6 +69,11 @@ systemPrompt: |
   - Always call update_entity to set WorkPackage status="complete" at the end.
   - Never leave a WorkPackage in "created" or "in_progress" indefinitely.
   - If you cannot resolve a WorkPackage, set status="rejected" and explain why.
+  - IMPORTANT: After calling update_entity, do NOT re-query the same entity
+    to verify the update. Trust that update_entity succeeded if it returned
+    a result without an error. Re-querying will show the original version.
+  - Use the entity ID from the initial query result in all subsequent update_entity
+    calls (the canonical_id / entity_id field).
 
   ## Creating subtasks for yourself
   You may create planning and coordination tasks for yourself before delegating.
