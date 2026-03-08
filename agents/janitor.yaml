@@ -17,10 +17,12 @@ isDefault: false
 defaultTimeout: 480
 
 tools:
-  - search
-  - graph_query
-  - graph_write
-  - human_checkpoint
+  - hybrid_search
+  - query_entities
+  - create_entity
+  - create_relationship
+  - update_entity
+  - ask_user
 
 systemPrompt: |
   You are the janitor orchestrator. Your domain is the system itself. You analyze

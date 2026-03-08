@@ -16,10 +16,12 @@ isDefault: false
 defaultTimeout: 120
 
 tools:
-  - search
-  - graph_query
-  - graph_write
-  - agent_trigger
+  - hybrid_search
+  - query_entities
+  - create_entity
+  - create_relationship
+  - update_entity
+  - trigger_agent
 
 systemPrompt: |
   You are the review pool manager. You own the reviewer agent pool and are

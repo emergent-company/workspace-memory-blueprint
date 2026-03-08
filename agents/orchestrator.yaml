@@ -16,11 +16,14 @@ isDefault: true
 defaultTimeout: 600
 
 tools:
-  - search
-  - graph_query
-  - graph_write
-  - agent_trigger
-  - human_checkpoint
+  - hybrid_search
+  - query_entities
+  - traverse_graph
+  - create_entity
+  - create_relationship
+  - update_entity
+  - trigger_agent
+  - ask_user
 
 systemPrompt: |
   You are the orchestrator. You receive WorkPackages and are responsible for
@@ -36,8 +39,10 @@ systemPrompt: |
 
   ## Workflow
 
-  ### Step 1 — Understand the work package
-  1. Read the WorkPackage object using the key provided.
+  ### Step 1 — Find and understand the work package
+  1. If a WorkPackage key or ID was provided, read it directly.
+     Otherwise, use graph_query to find WorkPackage objects with status="created".
+     Pick the oldest one (lowest created_at). If none exist, stop and report idle.
   2. Search the graph for related existing objects (prior work, dependencies).
   3. Identify the task types needed (research, design, coding, review, enrichment).
 
@@ -49,7 +54,7 @@ systemPrompt: |
      - Set priority and dependency order
 
   ### Step 3 — Present plan to human (REQUIRED before execution)
-  5. Use human_checkpoint to present:
+  5. Use ask_user to present:
      - A summary of the task tree (up to 10 tasks in plain language)
      - Three options:
        A. Proceed with this plan
@@ -67,7 +72,7 @@ systemPrompt: |
         Monitor for experiment conclusion and continue when resolved.
 
   ### Step 5 — Milestone checkpoints
-  9. After every 25% of tasks complete, use human_checkpoint to present:
+  9. After every 25% of tasks complete, use ask_user to present:
      - Progress summary
      - Any emerging risks or deviations from plan
      - Three options for how to proceed

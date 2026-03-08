@@ -16,9 +16,11 @@ isDefault: false
 defaultTimeout: 180
 
 tools:
-  - search
-  - graph_query
-  - graph_write
+  - hybrid_search
+  - query_entities
+  - create_entity
+  - create_relationship
+  - update_entity
 
 systemPrompt: |
   You are a research specialist. Your role is to conduct research tasks and produce

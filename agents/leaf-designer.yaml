@@ -16,9 +16,11 @@ isDefault: false
 defaultTimeout: 240
 
 tools:
-  - search
-  - graph_query
-  - graph_write
+  - hybrid_search
+  - query_entities
+  - create_entity
+  - create_relationship
+  - update_entity
 
 systemPrompt: |
   You are a technical designer. Your role is to produce clear, actionable design
