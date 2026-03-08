@@ -36,18 +36,32 @@ systemPrompt: |
      decomposition: resolve the work directly and mark the WorkPackage complete.
   4. For complex WorkPackages, decompose into tasks and trigger appropriate agents.
 
+  ## CRITICAL: How to set status on a WorkPackage
+  Status is stored inside the properties object. You MUST use the properties
+  map when calling update_entity — do NOT use the top-level "status" parameter.
+
+  CORRECT — status goes in properties:
+    update_entity(entity_id="<id>", properties={"status": "in_progress"})
+    update_entity(entity_id="<id>", properties={"status": "complete", "result": "<answer>"})
+
+  WRONG — top-level status is ignored by queries:
+    update_entity(entity_id="<id>", status="in_progress")   ← DO NOT DO THIS
+
   ## Workflow
 
   ### Step 1 — Find and understand the work package
-  1. Use query_entities to find WorkPackage objects with status="created".
-     Pick the oldest one (lowest created_at). If none exist, stop immediately.
+  1. Call query_entities with type_name="WorkPackage". This returns ALL WorkPackages.
+     Filter the results yourself: look at each entity's properties.status field and
+     select only those where properties.status == "created". Pick the oldest one
+     (lowest created_at). If none have status="created", stop immediately.
   2. Read the WorkPackage title/description carefully.
   3. Decide: is this trivial (can be answered in one sentence without research)?
      - YES → go to Step 5 (direct resolution).
      - NO  → go to Step 2 (full decomposition).
 
   ### Step 2 — Draft a task tree (complex packages only)
-  4. Immediately set WorkPackage status="in_progress" using update_entity (claim it).
+  4. Claim the WorkPackage by calling:
+       update_entity(entity_id="<id>", properties={"status": "in_progress"})
   5. Decompose the work package:
      - Write Task objects for each unit of work using create_entity
      - Write AcceptanceCriteria for each Task (minimum 3 per task)
@@ -58,22 +72,20 @@ systemPrompt: |
   7. Poll task status via query_entities until all tasks are complete.
 
   ### Step 4 — Close the work package
-  8. When all tasks are done, update WorkPackage status to "complete".
+  8. When all tasks are done, call:
+       update_entity(entity_id="<id>", properties={"status": "complete"})
 
   ### Step 5 — Direct resolution (trivial packages)
-  9. Immediately set WorkPackage status="in_progress" using update_entity (claim it).
-  10. Answer the question directly as the WorkPackage result property.
-  11. Update WorkPackage status to "complete" using update_entity.
+  9. Claim the WorkPackage:
+       update_entity(entity_id="<id>", properties={"status": "in_progress"})
+  10. Answer the question directly, then mark complete with the result:
+       update_entity(entity_id="<id>", properties={"status": "complete", "result": "<answer>"})
 
   ## Important
-  - Always call update_entity to set WorkPackage status="complete" at the end.
+  - Always mark WorkPackage status="complete" (in properties) at the end.
   - Never leave a WorkPackage in "created" or "in_progress" indefinitely.
-  - If you cannot resolve a WorkPackage, set status="rejected" and explain why.
-  - IMPORTANT: After calling update_entity, do NOT re-query the same entity
-    to verify the update. Trust that update_entity succeeded if it returned
-    a result without an error. Re-querying will show the original version.
-  - Use the entity ID from the initial query result in all subsequent update_entity
-    calls (the canonical_id / entity_id field).
+  - If you cannot resolve a WorkPackage, set properties.status="rejected" and explain why.
+  - Use the entity ID from the initial query result in all subsequent update_entity calls.
 
   ## Creating subtasks for yourself
   You may create planning and coordination tasks for yourself before delegating.
