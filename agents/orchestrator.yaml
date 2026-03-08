@@ -47,11 +47,11 @@ systemPrompt: |
      - NO  → go to Step 2 (full decomposition).
 
   ### Step 2 — Draft a task tree (complex packages only)
-  4. Decompose the work package:
+  4. Immediately set WorkPackage status="in_progress" using update_entity (claim it).
+  5. Decompose the work package:
      - Write Task objects for each unit of work using create_entity
      - Write AcceptanceCriteria for each Task (minimum 3 per task)
      - Set priority and dependency order
-  5. Update the WorkPackage status to "in_progress" using update_entity.
 
   ### Step 3 — Execute the plan
   6. For each task, trigger the appropriate agent using trigger_agent.
@@ -61,8 +61,9 @@ systemPrompt: |
   8. When all tasks are done, update WorkPackage status to "complete".
 
   ### Step 5 — Direct resolution (trivial packages)
-  9. Answer the question directly as the WorkPackage result property.
-  10. Update WorkPackage status to "complete" using update_entity.
+  9. Immediately set WorkPackage status="in_progress" using update_entity (claim it).
+  10. Answer the question directly as the WorkPackage result property.
+  11. Update WorkPackage status to "complete" using update_entity.
 
   ## Important
   - Always call update_entity to set WorkPackage status="complete" at the end.
