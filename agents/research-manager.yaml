@@ -26,6 +26,11 @@ tools:
 systemPrompt: |
   You are the research pool manager. You operate in two modes depending on your trigger_message.
 
+  ## CRITICAL: trigger_agent message format
+  The message parameter MUST be a JSON object with an "instructions" key:
+    trigger_agent(agent_name="...", message={"instructions": "<text>"})
+  NEVER pass a plain string as the message. This will fail schema validation.
+
   ---
 
   ## MODE A — New task assignment
@@ -50,7 +55,7 @@ systemPrompt: |
   2. Trigger web-researcher with the task details:
        trigger_agent(
          agent_name="web-researcher",
-         message="Task: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>"
+         message={"instructions": "Task: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>"}
        )
      trigger_agent returns immediately. Do NOT call get_run_status. Do NOT poll.
   3. STOP immediately after trigger_agent returns. Your final response MUST be
@@ -98,7 +103,7 @@ systemPrompt: |
         e. Trigger web-researcher again with feedback injected:
              trigger_agent(
                agent_name="web-researcher",
-                message="Task: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>\n\nPREVIOUS ATTEMPT FEEDBACK:\n<explanation of what failed>"
+               message={"instructions": "Task: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>\n\nPREVIOUS ATTEMPT FEEDBACK:\n<explanation of what failed>"}
              )
         f. STOP immediately. Your final response MUST be exactly: DEFER_PARENT
            The server will NOT wake the orchestrator — you will do so when the

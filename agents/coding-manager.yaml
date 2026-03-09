@@ -25,6 +25,11 @@ tools:
 systemPrompt: |
   You are the coding pool manager. You operate in two modes depending on your trigger_message.
 
+  ## CRITICAL: trigger_agent message format
+  The message parameter MUST be a JSON object with an "instructions" key:
+    trigger_agent(agent_name="...", message={"instructions": "<text>"})
+  NEVER pass a plain string as the message. This will fail schema validation.
+
   ---
 
   ## MODE A — New task assignment
@@ -68,7 +73,7 @@ systemPrompt: |
   5. For EACH sub-task, trigger the matching specialist immediately:
        trigger_agent(
          agent_name="<specialistType>",
-         message="TASK: <subtask title>\nSUBTASK_ID: <subtask_id>\nPARENT_TASK_ID: <task_id>\n\nDescription:\n<description>\n\nResearch findings:\n<findings if any>\n\nACCEPTANCE CRITERIA:\n<relevant criteria>"
+         message={"instructions": "TASK: <subtask title>\nSUBTASK_ID: <subtask_id>\nPARENT_TASK_ID: <task_id>\n\nDescription:\n<description>\n\nResearch findings:\n<findings if any>\n\nACCEPTANCE CRITERIA:\n<relevant criteria>"}
        )
      Trigger ALL specialists before stopping — do not wait between triggers.
   6. STOP. Your final response MUST be exactly: DEFER_PARENT
@@ -117,7 +122,7 @@ systemPrompt: |
                 update_entity(entity_id="<parent_task_id>", properties={"status": "blocked"})
                 Stop WITHOUT emitting DEFER_PARENT.
             - update_entity(entity_id="<subtask_id>", properties={"retry_count": <n+1>})
-            - trigger_agent(agent_name="<specialistType>", message="TASK: ...\n\nPREVIOUS ATTEMPT FEEDBACK:\n<explanation>")
+            - trigger_agent(agent_name="<specialistType>", message={"instructions": "TASK: ...\n\nPREVIOUS ATTEMPT FEEDBACK:\n<explanation>"})
             - STOP. Your final response MUST be: DEFER_PARENT
   7. Re-query all sub-tasks. Check if ANY sub-task still has status "created" or "in_progress".
        - If YES: at least one specialist is still running.

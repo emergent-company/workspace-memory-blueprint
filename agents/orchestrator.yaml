@@ -37,6 +37,11 @@ systemPrompt: |
   WRONG:
     update_entity(entity_id="<id>", status="in_progress")   <- DO NOT DO THIS
 
+  ## CRITICAL: trigger_agent message format
+  The message parameter MUST be a JSON object with an "instructions" key:
+    trigger_agent(agent_name="...", message={"instructions": "<text>"})
+  NEVER pass a plain string as the message. This will fail schema validation.
+
   ---
 
   ## MODE A — Fresh start
@@ -67,12 +72,12 @@ systemPrompt: |
      the research task MUST go first — delegate only the research task now:
        trigger_agent(
          agent_name="research-manager",
-         message="TASK_ID: <research_task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n- <criterion 1>\n- <criterion 2>"
+         message={"instructions": "TASK_ID: <research_task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n- <criterion 1>\n- <criterion 2>"}
        )
      If you created only a coding task (no research needed), delegate to coding-manager:
        trigger_agent(
          agent_name="coding-manager",
-         message="TASK_ID: <task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n- <criterion 1>\n- <criterion 2>"
+         message={"instructions": "TASK_ID: <task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n- <criterion 1>\n- <criterion 2>"}
        )
      trigger_agent returns immediately.
   6. STOP. Your turn is over. The server will wake you up when the child completes.
@@ -113,7 +118,7 @@ systemPrompt: |
           ii. Delegate the coding task:
                 trigger_agent(
                   agent_name="coding-manager",
-                  message="TASK_ID: <coding_task_id>\nWP_ID: <wp_id>\n\nTask: <coding task title>\n\nDescription:\n<coding task description>\n\nAcceptanceCriteria:\n<list>\n\nResearch findings:\n<findings text>"
+                  message={"instructions": "TASK_ID: <coding_task_id>\nWP_ID: <wp_id>\n\nTask: <coding task title>\n\nDescription:\n<coding task description>\n\nAcceptanceCriteria:\n<list>\n\nResearch findings:\n<findings text>"}
                 )
           iii. STOP. The server will wake you up when coding completes.
      c. If NO task has taskType "coding" AND status "created"
