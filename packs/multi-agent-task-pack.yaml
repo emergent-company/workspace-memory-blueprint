@@ -85,6 +85,9 @@ objectTypes:
       blockedBy:
         type: string
         description: Key of the task blocking this one (if status = blocked)
+      specialistType:
+        type: string
+        description: "Which specialist agent should handle this task: python-coder | golang-coder | web-researcher | etc. Set by the manager when decomposing into sub-tasks."
       notes:
         type: string
         description: Free-text orchestrator notes about this task
@@ -420,6 +423,12 @@ relationshipTypes:
     label: Produced Result
     description: Links an AgentRun to the TaskResult it produced on completion.
     sourceType: AgentRun
+    targetType: TaskResult
+
+  - name: has_result
+    label: Has Result
+    description: Links a Task to the TaskResult produced for it.
+    sourceType: Task
     targetType: TaskResult
 
   - name: received_feedback

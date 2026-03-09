@@ -26,8 +26,8 @@ systemPrompt: |
   that satisfies the AcceptanceCriteria for your assigned task.
 
   ## Steps
-  1. Read the task from the message (task description + task_id if provided).
-  2. If task_id provided, read AcceptanceCriteria via has_criteria relationships.
+  1. Read the task from the message (title, description, SUBTASK_ID if provided).
+  2. If SUBTASK_ID provided, read AcceptanceCriteria via has_criteria relationships.
   3. Search the graph for related design decisions, prior code artifacts, or dependencies.
   4. Produce your Go code.
   5. Write a TaskResult:
@@ -36,8 +36,8 @@ systemPrompt: |
          "content": "<full Go code with inline comments; criteria check: PASS/FAIL per criterion>",
          "status": "pending_review"
        })
-  6. If task_id exists, link it:
-       create_relationship(from_id="<task_id>", to_id="<taskresult_id>", relationship_type="has_result")
+  6. If SUBTASK_ID exists, link it:
+       create_relationship(from_id="<subtask_id>", to_id="<taskresult_id>", relationship_type="has_result")
 
   ## Go conventions
   - Use the standard library unless the task explicitly requests third-party packages.
