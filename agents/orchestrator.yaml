@@ -47,15 +47,25 @@ systemPrompt: |
      where properties.status == "created". Pick the oldest (lowest created_at).
      If none exist, stop immediately.
   2. Claim it: update_entity(entity_id="<wp_id>", properties={"status": "in_progress"})
-  3. Create ONE Task entity for the work:
-        create_entity(type_name="Task", properties={"title": "<task title>", "description": "<detail>", "status": "created", "workPackageKey": "<wp_id>"})
-  4. Create at least 3 AcceptanceCriteria entities and link each to the Task:
+  3. Decompose the work into tasks. Read the WorkPackage title carefully:
+     - If the work requires BOTH research AND coding (e.g. "find X and write a script"),
+       create TWO Task entities: one research task, one coding task.
+     - If the work requires only research OR only coding, create ONE Task.
+     For EACH Task:
+       create_entity(type_name="Task", properties={"title": "<task title>", "description": "<detail>", "status": "created", "workPackageKey": "<wp_id>"})
+  4. Create at least 2 AcceptanceCriteria and link each to its Task:
        create_entity(type_name="AcceptanceCriteria", properties={"criterion": "<text>"})
        create_relationship(from_id="<task_id>", to_id="<criteria_id>", relationship_type="has_criteria")
-  5. Trigger research-manager with the task details:
+  5. Determine delegation order. If you created a research task AND a coding task,
+     the research task MUST go first — delegate only the research task now:
        trigger_agent(
          agent_name="research-manager",
-         message="TASK_ID: <task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n- <criterion 1>\n- <criterion 2>\n- <criterion 3>"
+         message="TASK_ID: <research_task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n- <criterion 1>\n- <criterion 2>"
+       )
+     If you created only a coding task (no research needed), delegate to coding-manager:
+       trigger_agent(
+         agent_name="coding-manager",
+         message="TASK_ID: <task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n- <criterion 1>\n- <criterion 2>"
        )
      trigger_agent returns immediately.
   6. STOP. Your turn is over. The server will wake you up when the child completes.
@@ -81,13 +91,26 @@ systemPrompt: |
          update_entity(entity_id="<wp_id>", properties={"status": "blocked", "error": "<result text>"})
      - Stop.
   4. If status is "success":
-     - Find the TaskResult entity: query_entities(type_name="TaskResult")
-       Look for the most recent one with status "accepted" (highest created_at).
-     - If NO accepted TaskResult exists yet: STOP immediately without updating anything.
-       The research pipeline is still running; you will be woken up again when it finishes.
-     - If an accepted TaskResult exists:
-         update_entity(entity_id="<wp_id>", properties={"status": "complete", "result": "<task_result_id>"})
-     - Stop.
+     a. Query all Tasks for this WorkPackage: query_entities(type_name="Task").
+        Filter to tasks where properties.workPackageKey == "<wp_id>".
+     b. Check if there is a coding task that is still in "created" status
+        (i.e. not yet delegated). If research just completed and a coding task
+        is waiting, extract the research findings from the completed TaskResult
+        and delegate the coding task now:
+          trigger_agent(
+            agent_name="coding-manager",
+            message="TASK_ID: <coding_task_id>\nWP_ID: <wp_id>\n\nTask: <coding task title>\n\nDescription:\n<coding task description>\n\nAcceptanceCriteria:\n<list>\n\nResearch findings:\n<findings from the completed TaskResult>"
+          )
+        STOP. The server will wake you up when coding completes.
+     c. If ALL tasks are complete (no tasks with status "created" or "in_progress"):
+        - Find the most recent accepted TaskResult:
+            query_entities(type_name="TaskResult") — look for status "accepted".
+        - If found:
+            update_entity(entity_id="<wp_id>", properties={"status": "complete", "result": "<task_result_id>"})
+        - Stop.
+     d. If any task is blocked:
+        - update_entity(entity_id="<wp_id>", properties={"status": "blocked"})
+        - Stop.
 
   ---
 
