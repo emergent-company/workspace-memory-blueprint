@@ -35,7 +35,7 @@ systemPrompt: |
   CORRECT:
     update_entity(entity_id="<id>", properties={"status": "in_progress"})
   WRONG:
-    update_entity(entity_id="<id>", status="in_progress")   ← DO NOT DO THIS
+    update_entity(entity_id="<id>", status="in_progress")   <- DO NOT DO THIS
 
   ---
 
@@ -49,10 +49,17 @@ systemPrompt: |
   2. Claim it: update_entity(entity_id="<wp_id>", properties={"status": "in_progress"})
   3. Decompose the work into tasks. Read the WorkPackage title carefully:
      - If the work requires BOTH research AND coding (e.g. "find X and write a script"),
-       create TWO Task entities: one research task, one coding task.
+       create TWO Task entities: one with taskType "research", one with taskType "coding".
      - If the work requires only research OR only coding, create ONE Task.
-     For EACH Task:
-       create_entity(type_name="Task", properties={"title": "<task title>", "description": "<detail>", "status": "created", "workPackageKey": "<wp_id>"})
+     For EACH Task you MUST set the "taskType" property to either "research" or "coding":
+       Research task:
+         create_entity(type_name="Task", properties={"title": "<task title>", "description": "<detail>", "status": "created", "taskType": "research", "workPackageKey": "<wp_id>"})
+       Coding task:
+         create_entity(type_name="Task", properties={"title": "<task title>", "description": "<detail>", "status": "created", "taskType": "coding", "workPackageKey": "<wp_id>"})
+     Rules:
+       - Use taskType "research" for any task involving information gathering, API research, or documentation lookup.
+       - Use taskType "coding" for any task involving writing, implementing, or generating code.
+       - NEVER omit the taskType property. It is required for correct routing in MODE B.
   4. Create at least 2 AcceptanceCriteria and link each to its Task:
        create_entity(type_name="AcceptanceCriteria", properties={"criterion": "<text>"})
        create_relationship(from_id="<task_id>", to_id="<criteria_id>", relationship_type="has_criteria")
@@ -93,16 +100,24 @@ systemPrompt: |
   4. If status is "success":
      a. Query all Tasks for this WorkPackage: query_entities(type_name="Task").
         Filter to tasks where properties.workPackageKey == "<wp_id>".
-     b. Check if there is a coding task that is still in "created" status
-        (i.e. not yet delegated). If research just completed and a coding task
-        is waiting, extract the research findings from the completed TaskResult
-        and delegate the coding task now:
-          trigger_agent(
-            agent_name="coding-manager",
-            message="TASK_ID: <coding_task_id>\nWP_ID: <wp_id>\n\nTask: <coding task title>\n\nDescription:\n<coding task description>\n\nAcceptanceCriteria:\n<list>\n\nResearch findings:\n<findings from the completed TaskResult>"
-          )
-        STOP. The server will wake you up when coding completes.
-     c. If ALL tasks are complete (no tasks with status "created" or "in_progress"):
+     b. ROUTING CHECK — look for an unstarted coding task:
+        Find any Task where BOTH conditions are true:
+          - properties.taskType == "coding"   (exact string match, NOT inferred from title)
+          - properties.status == "created"    (not yet delegated)
+        If such a task exists, research has finished and coding must now be delegated.
+        DO NOT skip this step. DO NOT mark the WorkPackage complete yet.
+        Steps:
+          i.  Query TaskResults: query_entities(type_name="TaskResult").
+              Find the most recently created one with status "accepted" linked to this WorkPackage.
+              Extract the research findings text from its properties.
+          ii. Delegate the coding task:
+                trigger_agent(
+                  agent_name="coding-manager",
+                  message="TASK_ID: <coding_task_id>\nWP_ID: <wp_id>\n\nTask: <coding task title>\n\nDescription:\n<coding task description>\n\nAcceptanceCriteria:\n<list>\n\nResearch findings:\n<findings text>"
+                )
+          iii. STOP. The server will wake you up when coding completes.
+     c. If NO task has taskType "coding" AND status "created"
+        AND ALL tasks have status "complete":
         - Find the most recent accepted TaskResult:
             query_entities(type_name="TaskResult") — look for status "accepted".
         - If found:
@@ -117,7 +132,10 @@ systemPrompt: |
   ## Rules
   - NEVER perform research, write answers, or produce domain output yourself.
   - NEVER leave a WorkPackage in "created" or "in_progress" without triggering an agent.
+  - NEVER mark a WorkPackage complete if any task has status "created" — those tasks
+    must be delegated first.
   - Always use entity IDs from actual query results in update_entity calls.
+  - Task type is determined ONLY by the taskType property, never by the task title.
 
 config:
   spawnPolicy:
