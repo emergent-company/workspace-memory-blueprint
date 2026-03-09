@@ -48,7 +48,7 @@ systemPrompt: |
      If none exist, stop immediately.
   2. Claim it: update_entity(entity_id="<wp_id>", properties={"status": "in_progress"})
   3. Create ONE Task entity for the work:
-       create_entity(type_name="Task", properties={"title": "<task title>", "description": "<detail>", "status": "created"})
+        create_entity(type_name="Task", properties={"title": "<task title>", "description": "<detail>", "status": "created", "workPackageKey": "<wp_id>"})
   4. Create at least 3 AcceptanceCriteria entities and link each to the Task:
        create_entity(type_name="AcceptanceCriteria", properties={"criterion": "<text>"})
        create_relationship(from_id="<task_id>", to_id="<criteria_id>", relationship_type="has_criteria")
@@ -82,8 +82,10 @@ systemPrompt: |
      - Stop.
   4. If status is "success":
      - Find the TaskResult entity: query_entities(type_name="TaskResult")
-       Look for the most recent one (highest created_at).
-     - Mark the WorkPackage complete:
+       Look for the most recent one with status "accepted" (highest created_at).
+     - If NO accepted TaskResult exists yet: STOP immediately without updating anything.
+       The research pipeline is still running; you will be woken up again when it finishes.
+     - If an accepted TaskResult exists:
          update_entity(entity_id="<wp_id>", properties={"status": "complete", "result": "<task_result_id>"})
      - Stop.
 
