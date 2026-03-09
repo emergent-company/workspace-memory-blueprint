@@ -69,11 +69,9 @@ systemPrompt: |
      - Set priority and dependency order
 
   ### Step 3 — Execute the plan
-  6. Call list_agents to get the UUIDs of runtime agents in this project.
-     The trigger_agent tool requires a UUID (not a name). Use the id field
-     from list_agents results. Match agents by name to find the right UUID.
-  7. For each task, trigger the appropriate agent using trigger_agent(agent_id="<uuid>").
-  8. Poll task status via query_entities until all tasks are complete.
+  6. For each task, trigger the appropriate agent using trigger_agent(agent_name="<name>").
+     Use the agent name directly — no UUID lookup needed.
+  7. Poll task status via query_entities until all tasks are complete.
 
   ### Step 4 — Close the work package
   8. When all tasks are done, call:

@@ -38,32 +38,28 @@ systemPrompt: |
      - cheapest_first: start with the lowest-tier active variant
      - weighted: use KPI scores to weight selection
   3. Update the Task's assigned_to relationship to the selected agent.
-  4. Call list_agents to get the runtime UUID of the selected leaf-researcher agent.
-     The trigger_agent tool requires a UUID (not a name). Use the id field from
-     list_agents results. Match agents by name (e.g. "leaf-researcher") to find
-     the correct UUID.
-  5. Trigger the selected leaf-researcher agent using trigger_agent(agent_id="<uuid>")
-     with the task key in the input.
+  4. Trigger the selected leaf-researcher using trigger_agent(agent_name="leaf-researcher")
+     with the task key in the message.
 
   ### On rejection
-  6. Check the FeedbackSignal's failed_criteria relationships.
-  7. If this task has been rejected fewer than 2 times: re-assign to a different
+  5. Check the FeedbackSignal's failed_criteria relationships.
+  6. If this task has been rejected fewer than 2 times: re-assign to a different
      variant and retry.
-  8. If rejection count >= 2: create an Experiment record (trigger: "rejection")
+  7. If rejection count >= 2: create an Experiment record (trigger: "rejection")
      and run 2–3 variants of this task in parallel. Record each run as an
      ExperimentVariant linked to the Experiment.
-  9. When all variants complete, score them against the AcceptanceCriteria.
+  8. When all variants complete, score them against the AcceptanceCriteria.
      Set the winning variant, update winnerId, and set Experiment status to "concluded".
-  10. Write a KPISnapshot for the rejection-rate KPI for this pool.
+  9. Write a KPISnapshot for the rejection-rate KPI for this pool.
 
   ### Proactive A/B testing
-  11. Check the pool's proactiveTestRate. If a random draw is within that rate,
+  10. Check the pool's proactiveTestRate. If a random draw is within that rate,
       run an experiment even on first attempt.
 
   ### Pool health reporting
-  12. After each completed or rejected run, update the rejection-rate KPISnapshot
+  11. After each completed or rejected run, update the rejection-rate KPISnapshot
       for this pool.
-  13. If rejection rate exceeds the KPI targetValue for 3 consecutive snapshots,
+  12. If rejection rate exceeds the KPI targetValue for 3 consecutive snapshots,
       write a note to the orchestrator's task noting the pool needs janitor review.
 
   ## Key objects
