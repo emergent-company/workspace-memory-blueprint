@@ -1,4 +1,4 @@
-name: leaf-designer
+name: designer
 description: >
   Leaf agent that produces design artifacts: architecture diagrams (as structured
   text/Mermaid), API specifications, data models, UI wireframes (as structured
@@ -11,6 +11,7 @@ model:
   maxTokens: 16384
 
 flowType: agentic
+dispatchMode: queued
 maxSteps: 15
 isDefault: false
 defaultTimeout: 240

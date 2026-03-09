@@ -1,4 +1,4 @@
-name: pool-manager-review
+name: review-manager
 description: >
   Pool manager for the review agent pool. Selects reviewer variants and ensures
   that reviews are consistent, specific, and aligned with acceptance criteria.
@@ -11,6 +11,7 @@ model:
   maxTokens: 4096
 
 flowType: agentic
+dispatchMode: queued
 maxSteps: 10
 isDefault: false
 defaultTimeout: 120
@@ -22,6 +23,7 @@ tools:
   - create_relationship
   - update_entity
   - trigger_agent
+  - get_run_status
 
 systemPrompt: |
   You are the review pool manager. You own the reviewer agent pool and are
@@ -34,7 +36,10 @@ systemPrompt: |
      for its active AgentDefinitionRecord members.
   2. Select a reviewer variant (default: cheapest available).
   3. Update the Task's assigned_to relationship.
-  4. Trigger the selected leaf-reviewer agent with the TaskResult key.
+  4. Trigger the selected reviewer agent with the TaskResult key.
+     trigger_agent returns immediately with { "run_id": "...", "status": "queued" }.
+     Poll using get_run_status(run_id="<run_id>") until status is "success" or "error"
+     (max 10 polls). Use the run result to assess success or failure.
 
   ### Review quality monitoring
   5. After a reviewer produces a rejection FeedbackSignal, check:
@@ -57,3 +62,6 @@ config:
   agentType: pool_manager
   managedPool: pool-review
   tier: cheap
+  spawnPolicy:
+    allow:
+      - reviewer

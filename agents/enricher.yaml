@@ -1,4 +1,4 @@
-name: leaf-enricher
+name: enricher
 description: >
   Leaf agent that extracts and enriches structured properties from raw content.
   Reads source material, identifies entities, relationships, and key metadata,
@@ -11,6 +11,7 @@ model:
   maxTokens: 4096
 
 flowType: agentic
+dispatchMode: queued
 maxSteps: 8
 isDefault: false
 defaultTimeout: 120

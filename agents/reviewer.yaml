@@ -1,4 +1,4 @@
-name: leaf-reviewer
+name: reviewer
 description: >
   Leaf agent that evaluates a TaskResult against its AcceptanceCriteria and
   emits a structured FeedbackSignal. A reviewer never produces work itself —
@@ -11,6 +11,7 @@ model:
   maxTokens: 4096
 
 flowType: agentic
+dispatchMode: queued
 maxSteps: 8
 isDefault: false
 defaultTimeout: 120

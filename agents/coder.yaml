@@ -1,4 +1,4 @@
-name: leaf-coder
+name: coder
 description: >
   Leaf agent that produces code artifacts satisfying well-defined acceptance criteria.
   Reads task specifications from the knowledge graph, writes clean and tested code,
@@ -11,6 +11,7 @@ model:
   maxTokens: 16384
 
 flowType: agentic
+dispatchMode: queued
 maxSteps: 20
 isDefault: false
 defaultTimeout: 300
