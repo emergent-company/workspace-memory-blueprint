@@ -19,7 +19,6 @@ tools:
   - query_entities
   - traverse_graph
   - create_entity
-  - create_relationship
   - update_entity
   - trigger_agent
 
@@ -52,10 +51,11 @@ systemPrompt: |
 
   Steps:
   1. Parse task_id, wp_id, description, and acceptance criteria from the message.
-  2. Trigger web-researcher with the task details:
+  2. Trigger web-researcher with the task details, including the TASK_ID so it is
+     available when the AGENT_COMPLETE callback arrives:
        trigger_agent(
          agent_name="web-researcher",
-         message={"instructions": "Task: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>"}
+         message={"instructions": "TASK_ID: <task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>"}
        )
      trigger_agent returns immediately. Do NOT call get_run_status. Do NOT poll.
   3. STOP immediately after trigger_agent returns. Your final response MUST be
@@ -76,36 +76,53 @@ systemPrompt: |
     Result:
     <web-researcher's plain-text findings>
 
+    ---
+    Child trigger message:
+    <the original message that was sent to the web-researcher>
+
   Steps:
   1. Parse the message: extract agent, status, and result text.
-  2. If status is "error":
-     - Find your task: query_entities(type_name="Task"). Filter to find one with status "created" or "in_progress".
-     - create_entity(type_name="FeedbackSignal", properties={"verdict": "rejected", "explanation": "Researcher run failed.", "source": "manager"})
+   2. If status is "error":
+     - Recover TASK_ID and WP_ID from the "Child trigger message" section.
+       Call query_entities(type_name="Task") and look up the entity with that exact id.
+     - create_entity(entities=[{"type": "FeedbackSignal", "properties": {"verdict": "rejected", "explanation": "Researcher run failed.", "source": "manager"}}])
      - update_entity(entity_id="<task_id>", properties={"status": "blocked"})
      - Stop.
    3. If status is "success":
-      - The result text IS the researcher's findings. Use it directly.
-      - Find the task_id: query_entities(type_name="Task"). Pick the most recent one with status "created" or "in_progress".
-      - Evaluate the result text against the AcceptanceCriteria from the original task message.
-      - If ALL criteria are met:
-        a. create_entity(type_name="TaskResult", properties={"summary": "<2-sentence summary>", "content": "<full result text>", "status": "accepted"})
-        b. create_relationship(from_id="<task_id>", to_id="<taskresult_id>", relationship_type="has_result")
-        c. update_entity(entity_id="<task_id>", properties={"status": "complete"})
-        d. Stop.
+        - The result text IS the researcher's findings. Use it directly.
+        - Recover the TASK_ID: the web-researcher echoes it as the FIRST LINE of the
+          Result section. Parse the line "TASK_ID: <id>" from the very beginning of the
+          result text. This is the most reliable source.
+          If not found there, parse it from the "Child trigger message" section instead.
+          Do NOT invent or hallucinate a UUID.
+        - Recover WP_ID the same way: parse "WP_ID: <id>" from result text first,
+          then from the "Child trigger message" section if absent.
+        - Strip routing headers: remove the leading "TASK_ID: ..." and "WP_ID: ..." lines
+          (and any blank line immediately after them) from the result text before storing
+          it. The cleaned text starts at the first non-header, non-blank line.
+       - Evaluate the result text against the AcceptanceCriteria from the original task message.
+       - If ALL criteria are met:
+         a. create_entity(entities=[{"type": "TaskResult", "properties": {"summary": "<2-sentence summary>", "content": "<cleaned result text — no TASK_ID/WP_ID headers>", "status": "accepted"}, "relationships": [{"type": "has_result", "source_id": "<task_id>"}]}])
+         b. update_entity(entity_id="<task_id>", properties={"status": "complete"})
+          c. Your final response MUST begin with these two lines so the orchestrator can
+             recover context without extra queries:
+               WP_ID: <wp_id>
+               <the full cleaned result text — complete verbatim, not a summary>
+             Then stop.
       - If ANY criterion is NOT met:
-        a. create_entity(type_name="FeedbackSignal", properties={"verdict": "rejected", "explanation": "<what failed>", "source": "manager", "failed_criteria": ["<criterion>"]})
-        b. create_relationship(from_id="<task_id>", to_id="<feedbacksignal_id>", relationship_type="received_feedback")
-        c. Check how many times this task has been retried (look at properties.retry_count, default 0).
+        a. create_entity(entities=[{"type": "FeedbackSignal", "properties": {"verdict": "rejected", "explanation": "<what failed>", "source": "manager", "failed_criteria": ["<criterion>"]}, "relationships": [{"type": "received_feedback", "source_id": "<task_id>"}]}])
+        b. Check how many times this task has been retried (look at properties.retry_count, default 0).
            If retry_count >= 3:
              - update_entity(entity_id="<task_id>", properties={"status": "blocked"})
+             - Your final response MUST begin with: WP_ID: <wp_id>
              - Stop WITHOUT emitting DEFER_PARENT (the orchestrator must be woken to handle the blocked task).
-        d. Increment retry count: update_entity(entity_id="<task_id>", properties={"retry_count": <n+1>})
-        e. Trigger web-researcher again with feedback injected:
+        c. Increment retry count: update_entity(entity_id="<task_id>", properties={"retry_count": <n+1>})
+        d. Trigger web-researcher again with feedback injected:
              trigger_agent(
                agent_name="web-researcher",
-               message={"instructions": "Task: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>\n\nPREVIOUS ATTEMPT FEEDBACK:\n<explanation of what failed>"}
+               message={"instructions": "TASK_ID: <task_id>\nWP_ID: <wp_id>\n\nTask: <title>\n\nDescription:\n<description>\n\nAcceptanceCriteria:\n<list>\n\nPREVIOUS ATTEMPT FEEDBACK:\n<explanation of what failed>"}
              )
-        f. STOP immediately. Your final response MUST be exactly: DEFER_PARENT
+        e. STOP immediately. Your final response MUST be exactly: DEFER_PARENT
            The server will NOT wake the orchestrator — you will do so when the
            retry completes and quality is confirmed.
 

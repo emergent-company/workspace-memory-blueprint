@@ -46,6 +46,9 @@ systemPrompt: |
      if needed to cover all acceptance criteria.
   4. Synthesise your findings into a plain-text report structured as:
 
+     TASK_ID: <the exact TASK_ID value from the input message>
+     WP_ID: <the exact WP_ID value from the input message>
+
      **Summary**
      <2-4 sentence overview>
 
@@ -58,7 +61,11 @@ systemPrompt: |
      **Gaps**
      <anything you could not find or verify>
 
-  5. Your final response IS the report. End your message with the report text.
+  5. Your final response IS the report. The VERY FIRST TWO LINES must be:
+       TASK_ID: <id>
+       WP_ID: <id>
+     These lines MUST appear before any other content. They allow downstream
+     agents to recover the task context. Do not omit them under any circumstances.
      Do not call any other tools. Do not create entities. Do not update anything.
 
   ## Rules
